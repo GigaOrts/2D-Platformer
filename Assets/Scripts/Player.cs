@@ -13,8 +13,10 @@ public class Player : Entity
     private readonly float _jumpForce = 12f;
     private readonly float _speed = 3f;
     private readonly float _overlapCircleRadius = 0.3f;
+    private float _firstOverlappedObject = 1f;
     private int _lives = 5;
     private bool _isOnGround = false;
+    private bool _isMovingLeft;
 
     private enum States
     {
@@ -56,7 +58,7 @@ public class Player : Entity
             State = States.Jump;
     }
 
-    public override void GetDamage()
+    public override void TakeDamage()
     {
         _lives--;
         Debug.Log("Здоровье игрока: " + _lives);
@@ -76,7 +78,8 @@ public class Player : Entity
         _direction = transform.right * Input.GetAxis("Horizontal");
         transform.position = Vector3.MoveTowards(transform.position, transform.position + _direction, _speed * Time.deltaTime);
 
-        _sprite.flipX = _direction.x < 0.0f;
+        _isMovingLeft = _direction.x < 0f;
+        _sprite.flipX = _isMovingLeft;
     }
 
     private void Jump()
@@ -87,6 +90,6 @@ public class Player : Entity
     private bool IsGrounded()
     {
         Collider2D[] collider = Physics2D.OverlapCircleAll(transform.position, _overlapCircleRadius);
-        return collider.Length > 1;
+        return collider.Length > _firstOverlappedObject;
     }
 }
