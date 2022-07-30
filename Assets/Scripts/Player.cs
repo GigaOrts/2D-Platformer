@@ -1,5 +1,7 @@
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody2D))]
+
 public class Player : Entity
 {
     private SpriteRenderer _sprite;
@@ -7,10 +9,12 @@ public class Player : Entity
     private Animator _animator;
     private Vector3 _direction;
 
+    private const string CurrentState = "state";
     private readonly float _jumpForce = 12f;
     private readonly float _speed = 3f;
+    private readonly float _overlapCircleRadius = 0.3f;
     private int _lives = 5;
-    private bool _isGrounded = false;
+    private bool _isOnGround = false;
 
     private enum States
     {
@@ -21,8 +25,8 @@ public class Player : Entity
 
     private States State
     {
-        get { return (States)_animator.GetInteger("state"); }
-        set { _animator.SetInteger("state", (int)value); }
+        get { return (States)_animator.GetInteger(CurrentState); }
+        set { _animator.SetInteger(CurrentState, (int)value); }
     }
 
     private void Awake()
@@ -34,27 +38,30 @@ public class Player : Entity
 
     private void Update()
     {
-        if (_isGrounded)
+        if (_isOnGround)
             State = States.Idle;
+
         if (Input.GetButton("Horizontal"))
             Run();
-        if (_isGrounded && Input.GetButtonDown("Jump"))
+
+        if (_isOnGround && Input.GetButtonDown("Jump"))
             Jump();
     }
 
     private void FixedUpdate()
     {
-        CheckGround();
+        _isOnGround = IsGrounded();
+
+        if (!_isOnGround)
+            State = States.Jump;
     }
 
     public override void GetDamage()
     {
-        if (_lives > 0)
-        {
-            _lives--;
-            Debug.Log("Здоровье игрока: " + _lives);
-        }
-        else
+        _lives--;
+        Debug.Log("Здоровье игрока: " + _lives);
+
+        if (_lives <= 0)
         {
             Die();
             Debug.Log("Вы мертвы.");
@@ -63,7 +70,7 @@ public class Player : Entity
 
     private void Run()
     {
-        if (_isGrounded)
+        if (_isOnGround)
             State = States.Run;
 
         _direction = transform.right * Input.GetAxis("Horizontal");
@@ -77,12 +84,9 @@ public class Player : Entity
         _rigidBody2D.AddForce(transform.up * _jumpForce, ForceMode2D.Impulse);
     }
 
-    private void CheckGround()
+    private bool IsGrounded()
     {
-        Collider2D[] collider = Physics2D.OverlapCircleAll(transform.position, 0.3f);
-        _isGrounded = collider.Length > 1;
-
-        if (!_isGrounded)
-            State = States.Jump;
+        Collider2D[] collider = Physics2D.OverlapCircleAll(transform.position, _overlapCircleRadius);
+        return collider.Length > 1;
     }
 }
