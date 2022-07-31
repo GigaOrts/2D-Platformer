@@ -61,13 +61,9 @@ public class Player : Entity
     public override void TakeDamage()
     {
         _lives--;
-        Debug.Log("Здоровье игрока: " + _lives);
 
         if (_lives <= 0)
-        {
             Die();
-            Debug.Log("Вы мертвы.");
-        }
     }
 
     private void Run()
